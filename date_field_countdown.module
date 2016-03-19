@@ -2,30 +2,32 @@
 /**
  * Implements hook_libraries_info().
  */
+
 function date_field_countdown_libraries_info() {
+
   $libraries['countdown'] = array(
     'name' => 'countdown',
     'vendor url' => 'http://tutorialzine.com/2011/12/countdown-jquery/',
     'download url' => 'http://tutorialzine.com/2011/12/countdown-jquery/',
-    'version arguments' => array(
+      'version arguments' => array(
       'file' => 'jquery.countdown.js',
       'pattern' => '@version\s+([0-9a-zA-Z\.-]+)@', 
       'lines' => 7,
       'cols' => 30,
     ),
     'files' => array(
-
       'js' => array(
-        'jquery.countdown.js' => array(
-          'data' => 'jquery.countdown.js',
-          'type' => 'file',
-        ),
+        'jquery.countdown.js'
+      ),
+      'css' => array(
+        'jquery.countdown.css'
       )
     ),
   );
 
   return $libraries;
 }
+
 
 /**
 * Implements hook_field_formatter_info().
@@ -57,7 +59,6 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
           '#value' => $item['value']
         );
 
-
      }
       break;
   }
@@ -68,6 +69,11 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
 * Implements hook_theme().
 */
 function date_field_countdown_theme() {
+
+  $library='countdown';
+  
+  $library = libraries_load('countdown');
+
   return array(
     'date_field_cowntdown' => array(
       'template' => 'date_field_cowntdown',
