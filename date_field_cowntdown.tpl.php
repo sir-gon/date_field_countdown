@@ -1,0 +1,1 @@
+<div class="date-field-countdown"><?php print $value; ?></div> 
