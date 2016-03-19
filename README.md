@@ -1,7 +1,8 @@
 Warning
 =======
 
-Not fully funcitonal yet!
+Not fully functional yet!
+
 **Under development**
 
 
