@@ -1,0 +1,60 @@
+<?php
+/**
+ * Implements hook_libraries_info().
+ */
+function date_field_countdown_libraries_info() {
+  $libraries['countdown'] = array(
+    'name' => 'countdown',
+    'vendor url' => 'http://tutorialzine.com/2011/12/countdown-jquery/',
+    'download url' => 'http://tutorialzine.com/2011/12/countdown-jquery/',
+    'version arguments' => array(
+      'file' => 'jquery.countdown.js',
+      'pattern' => '@version\s+([0-9a-zA-Z\.-]+)@', 
+      'lines' => 7,
+      'cols' => 30,
+    ),
+    'files' => array(
+
+      'js' => array(
+        'jquery.countdown.js' => array(
+          'data' => 'jquery.countdown.js',
+          'type' => 'file',
+        ),
+      )
+    ),
+  );
+
+  return $libraries;
+}
+
+/**
+* Implements hook_field_formatter_info().
+*/
+function date_field_countdown_field_formatter_info() {
+  $info = array(
+    'countdown' => array(
+      'label' => t('Countdown'), 
+      'field types' => array('date', 'datestamp', 'datetime'),
+      'description' => t(''),
+    ), 
+  );
+  return $info;
+ }
+
+/**
+* Implements hook_field_formatter_view().
+*/
+function date_field_countdown_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  switch ($display['type']) {
+    case 'countdown':
+      foreach ($items as $delta => $item) {
+        $element[$delta] = array(
+          '#theme' => 'date_field__date_wn_formatter', 
+          '#value' => ''
+        );
+     }
+      break;
+  }
+  return $element;
+}
