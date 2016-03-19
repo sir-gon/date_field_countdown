@@ -7,9 +7,10 @@ $field_id_note = $field_id.'-note';
 $field_id_countdown = $field_id.'-countdown';
 ?>
 
-
 <div class="date-field-countdown">
 	<!-- <?php echo $value; ?> -->
+	<!-- <?php echo $url; ?> -->
+	<!-- <?php echo $title; ?> -->
 	<div id="<?php echo $field_id_countdown; ?>"></div>
 	<p id="<?php echo $field_id_note; ?>"></p>
 </div> 
@@ -24,8 +25,12 @@ $field_id_countdown = $field_id.'-countdown';
     if((new Date()) > ts){
         // The new year is here! Count towards something else.
         // Notice the *1000 at the end - time must be in milliseconds
-        ts = (new Date()).getTime() + 10*24*60*60*1000;
+        ts = <?php echo $value; ?>;
+
         newYear = false;
+
+        console.log((new Date()).getTime());
+        console.log('<?php echo $value; ?>' );
     }
 
     $('#<?php echo $field_id_countdown; ?>').countdown({

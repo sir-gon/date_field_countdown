@@ -54,13 +54,25 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
 
       foreach ($items as $delta => $item) {
 
+        if(!isset($item['data_type']))
+          $item['data_type'] = 'none';
+
         $element[$delta] = array(
           '#theme' => 'date_field_cowntdown', 
-          '#value' => $item['value']
+          '#value' => $item['value']* 1000,
         );
 
-     }
-      break;
+        switch($item['data_type']) {
+
+          case 'datestamp':
+
+            $element[$delta]['#value'] = $item['value'] * 1000;
+
+          break;
+        }
+
+    }
+    break;
   }
   return $element;
 }
@@ -78,7 +90,7 @@ function date_field_countdown_theme() {
     'date_field_cowntdown' => array(
       'template' => 'date_field_cowntdown',
       'variables' => array(
-        'value' => NULL
+        'value' => NULL,
       ),
     ),
   );
