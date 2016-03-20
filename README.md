@@ -1,9 +1,7 @@
 Warning
 =======
 
-Not fully functional yet!
-
-**Under development**
+Basic support for [date](https://www.drupal.org/project/date) fields with timestamp value
 
 
 About
