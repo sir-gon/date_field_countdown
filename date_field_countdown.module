@@ -38,6 +38,10 @@ function date_field_countdown_field_formatter_info() {
       'label' => t('Countdown'), 
       'field types' => array('date', 'datestamp', 'datetime'),
       'description' => t(''),
+      'settings'  => array( //Array of the settings we'll create
+        'pic_size' => 'small', //give a default value for when the form is first loaded
+        'tooltip' => 'Link to user Facebook page', //ditto
+      ),
     ), 
   );
   return $info;
@@ -54,19 +58,51 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
 
       foreach ($items as $delta => $item) {
 
-        if(!isset($item['data_type']))
-          $item['data_type'] = 'none';
+        dsm($item);
+
+        if(!isset($item['date_type']))
+          $item['date_type'] = 'none';
 
         $element[$delta] = array(
           '#theme' => 'date_field_cowntdown', 
           '#value' => $item['value']* 1000,
         );
 
-        switch($item['data_type']) {
+
+        switch($item['date_type']) {
 
           case 'datestamp':
 
             $element[$delta]['#value'] = $item['value'] * 1000;
+            if(isset($item['offset']))
+            {
+              $element[$delta]['#value'] = $element[$delta]['#value'] + ($item['offset'] * 1000);
+            }
+
+
+          break;
+          case 'date': // ISO DATE
+
+            $d1=new DateTime($item['value']);
+            
+            $element[$delta]['#value'] = (int) $d1->getTimestamp() * 1000;
+            if(isset($item['offset']))
+            {
+              $element[$delta]['#value'] = $element[$delta]['#value'] + ($item['offset'] * 1000);
+            }
+
+          break;
+          case 'datetime': // Reverse date time
+
+            $d1=new DateTime($item['value']);
+
+            $element[$delta]['#value'] = (int) $d1->getTimestamp() * 1000;
+            /*
+            if(isset($item['offset']))
+            {
+              $element[$delta]['#value'] = $element[$delta]['#value'] + ($item['offset'] * 1000);
+            }
+            */
 
           break;
         }
@@ -75,6 +111,56 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
     break;
   }
   return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function date_field_countdown_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  //This gets the view_mode where our settings are stored
+  $display = $instance['display'][$view_mode];
+  //This gets the actual settings
+
+
+  $settings = $display['settings'];
+
+
+  //Initialize the element variable
+  $element = array();
+  //Add your select box
+  $element['pic_size'] = array(
+    '#type'           => 'select',                           // Use a select box widget
+    '#title'          => t('Button Size'),                   // Widget label
+    '#description'    => t('Select what size of FB button'), // Helper text
+    '#default_value'  => $settings['pic_size'],              // Get the value if it's already been set
+    '#options'        => array(
+      'small'  => 'Small',
+      'medium' => 'Medium',
+      'large'  => 'Large',
+    ),
+  );
+  $element['tooltip'] = array(
+    '#type'           => 'textfield',                        // Use a textbox
+    '#title'          => t('Tool Tip'),                      // Widget label
+    '#description'    => t('This text will appear when a user mouses over.'),  // helper text
+    '#default_value'  => $settings['tooltip'],               // Get the value if it's already been set
+  );
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function date_field_countdown_field_formatter_settings_summary($field, $instance, $view_mode) {
+
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $summary = t('Use a @size Facebook button with the tooltip of "@tooltip"', array(
+    '@size'     => isset($settings['pic_size']) ? $settings['pic_size'] : '',
+    '@tooltip'  => isset($settings['tooltip']) ? $settings['tooltip'] : '',
+  )); // we use t() for translation and placeholders to guard against attacks
+  return $summary;
 }
 
 /**
