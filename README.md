@@ -21,8 +21,10 @@ Installation
 Dependencies
 ------------
 
+- [Date](https://www.drupal.org/project/date)
 - [Libraries API 2.x](http://drupal.org/project/libraries)
 - [jQuery Countdown](http://tutorialzine.com/2011/12/countdown-jquery/)
+
 
 Tasks
 -----
