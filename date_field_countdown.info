@@ -1,5 +1,9 @@
 name = Date Field Countdown
 description = Field formatter for date fields using jQuery Countdown
+dependencies[] = libraries
+dependencies[] = date_api
+package = Date/Time
 core = 7.x
+
 version = 7.x-0.1
 project = date_field_countdown
