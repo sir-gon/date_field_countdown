@@ -8,9 +8,7 @@ $field_id_countdown = $field_id.'-countdown';
 ?>
 
 <div class="date-field-countdown">
-	<!-- <?php echo $value; ?> -->
-	<!-- <?php echo $url; ?> -->
-	<!-- <?php echo $title; ?> -->
+
 	<div id="<?php echo $field_id_countdown; ?>"></div>
 	<p id="<?php echo $field_id_note; ?>"></p>
 </div> 
