@@ -1,4 +1,14 @@
 <?php
+/**
+ * Defined variables:
+ *
+ * $value               timestamp in milliseconds
+ * $timestamp               ,
+ * $time_out_message        ,
+ * $time_left_message       ,
+ * $time_out_hide_timer     ,
+ */
+
 $key = md5(uniqid(rand(), true));
 $key = substr($key, 0, 5);
 
@@ -8,7 +18,6 @@ $field_id_countdown = $field_id.'-countdown';
 ?>
 
 <div class="date-field-countdown">
-
 	<div id="<?php echo $field_id_countdown; ?>"></div>
 	<p id="<?php echo $field_id_note; ?>"></p>
 </div> 
@@ -16,38 +25,18 @@ $field_id_countdown = $field_id.'-countdown';
 <script type="text/javascript">
 (function($){
 
-    var note = $('#<?php echo $field_id_note; ?>'),
-        ts = new Date(2012, 0, 1),
-        newYear = true;
-
-    if((new Date()) > ts){
-        // The new year is here! Count towards something else.
-        // Notice the *1000 at the end - time must be in milliseconds
-        ts = <?php echo $value; ?>;
-
-        newYear = false;
-
-        console.log((new Date()).getTime());
-        console.log('<?php echo $value; ?>' );
-    }
+    var note = $('#<?php echo $field_id_note; ?>');
+    ts = <?php echo $timestamp; ?>;
 
     $('#<?php echo $field_id_countdown; ?>').countdown({
         timestamp   : ts,
         callback    : function(days, hours, minutes, seconds){
 
-            var message = "";
-
-            message += days + " day" + ( days==1 ? '':'s' ) + ", ";
-            message += hours + " hour" + ( hours==1 ? '':'s' ) + ", ";
-            message += minutes + " minute" + ( minutes==1 ? '':'s' ) + " and ";
-            message += seconds + " second" + ( seconds==1 ? '':'s' ) + " <br />";
-
-            if(newYear){
-                message += "left until the new year!";
-            }
-            else {
-                message += "left to 10 days from now!";
-            }
+            var message = "<?php echo $time_left_message; ?>";
+            message = message.replace('@days', days);
+            message = message.replace('@hours', hours);
+            message = message.replace('@minutes', minutes);
+            message = message.replace('@seconds', seconds);
 
             note.html(message);
         }
