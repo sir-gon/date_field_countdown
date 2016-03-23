@@ -39,12 +39,19 @@ function date_field_countdown_theme() {
     'date_field_cowntdown' => array(
       'template' => 'date_field_cowntdown',
       'variables' => array(
+        // values
         'timestamp' => NULL,
         'formatted_date' => NULL,
-        'time_out_message' => NULL,
-        'time_left_message' => NULL,
-        'time_out_hide_timer' => NULL,
+        // settings
         'date_type' => NULL,
+        'time_left_show_countdown' => NULL,
+        'time_left_show_date' => NULL,
+        'time_left_show_message' => NULL,
+        'time_left_message' => NULL,
+        'time_out_show_date' => NULL,
+        'time_out_show_countdown' => NULL,
+        'time_out_show_message' => NULL,
+        'time_out_message' => NULL
       ),
     ),
   );
@@ -60,11 +67,22 @@ function date_field_countdown_field_formatter_info() {
       'field types' => array('date', 'datestamp', 'datetime'),
       'description' => t(''),
       'settings'  => array(
-        'time_out_message' => t('it\'s time!'),
-        'time_left_message' => t('@days days, @hours hours, @minutes minutes, @seconds seconds left!'),
-        'time_out_hide_timer' => 'Yes',
-        'show_date_time' => 'No',
-        'date_type' => 'long'
+        // Common
+        'common' => array('date_type' => 'long'),
+        // Future
+        'future' => array(
+          'time_left_show_countdown' => 1,
+          'time_left_show_date' => 0,
+          'time_left_show_message' =>  1,
+          'time_left_message' => t('@days days, @hours hours, @minutes minutes, @seconds seconds left!')
+        ),
+        // Past
+        'past' => array(
+          'time_out_show_countdown' => 0,
+          'time_out_show_date' => 1,
+          'time_out_show_message' => 0,
+          'time_out_message' => t('it\'s time!')
+        )
       ),
     ), 
   );
@@ -78,9 +96,7 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
 
   $settings = $display['settings'];
   $element = array();
-          
   
-
   switch ($display['type']) {
     case 'countdown':
 
@@ -93,7 +109,6 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
           '#time_out_message' => $settings['time_out_message'],
           '#time_left_message' => $settings['time_left_message'],
           '#time_out_hide_timer' => $settings['time_out_hide_timer'],
-          '#date_type' => $settings['date_type']
         );
 
 
@@ -146,49 +161,114 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
  */
 function date_field_countdown_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
 
+  // Get display mode
   $display = $instance['display'][$view_mode];
+
+  // Get field settings
   $settings = $display['settings'];
-
-  dsm($settings);
-
-  $element = array();
-
-  $element['time_out_message'] = array(
-    '#type'           => 'textfield',
-    '#title'          => t('Time out message'),
-    '#description'    => t('Message to display when the date is in the past'),
-    '#default_value'  => $settings['time_out_message'],
-  );
-  $element['time_left_message'] = array(
-    '#type'           => 'textfield',
-    '#title'          => t('Time left message'),
-    '#description'    => t('Message to display when the date is in the future'),
-    '#default_value'  => $settings['time_left_message'],
-  );
-  $element['time_out_hide_timer'] = array(
-    '#type'           => 'radios',          
-    '#title'          => t('Time left message'),
-    '#description'    => t(''),
-    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
-    '#default_value'  => $settings['time_out_hide_timer'],
-  );
-  $element['date_type'] = array(
-    '#type'           => 'select',                        
-    '#title'          => t('Date Type'),
-    '#description'    => t('You can configure date types <a href="@url">here</a>', array('@url' => 'admin/config/regional/date-time')),
-    '#options' => array( ),
-    '#default_value'  => $settings['time_out_hide_timer'],
-  );
-
 
   // Get list of date format types.
   $types = system_get_date_types();
 
+  dsm($settings);
+
+  // Build form
+  $form = array();
+
+  // Common
+  $form['common'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Common'),
+  );
+
+  $form['common']['date_type'] = array(
+    '#type'           => 'select',                        
+    '#title'          => t('Date Type'),
+    '#description'    => t('Select date type to show, if you want to show the date. You can configure date types <a href="@url">here</a>', array('@url' => 'admin/config/regional/date-time')),
+    '#options' => array( ),
+    '#default_value'  => $settings['common']['date_type'],
+  );
+
   foreach ($types as $type => $type_values) {
-    $element['date_type']['#options'][$type] = $type_values['title'];
+    $form['common']['date_type']['#options'][$type] = $type_values['title'];
   }
 
-  return $element;
+  // Future
+  $form['future'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Future'),
+  );
+
+  $form['future']['time_left_show_countdown'] = array(
+    '#type'           => 'radios',          
+    '#title'          => t('Show Countdown'),
+    '#description'    => t('Show or hide countdown when date/time is in the past'),
+    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
+    '#default_value'  => $settings['future']['time_left_show_countdown'],
+  );
+
+  $form['future']['time_left_show_date'] = array(
+    '#type'           => 'radios',
+    '#title'          => t('Show Date/Time'),
+    '#description'    => t('Show formatted date/time when value is in the future'),
+    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
+    '#default_value'  => $settings['future']['time_left_show_date'],
+  );
+
+  $form['future']['time_left_show_message'] = array(
+    '#type'           => 'radios',
+    '#title'          => t('Show message'),
+    '#description'    => t('Show a message when value is in the future' ),
+    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
+    '#default_value'  => $settings['future']['time_left_show_message'],
+  );
+
+  $form['future']['time_left_message'] = array(
+    '#type'           => 'textfield',
+    '#title'          => t('Time left message'),
+    '#description'    => t('Message to display when the date is in the futur. You can use tokens like: @days, @hours, @minutes, @seconds'),
+    '#default_value'  => $settings['future']['time_left_message'],
+  );
+
+  // Past
+  $form['past'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Past'),
+  );
+
+  $form['past']['time_out_show_countdown'] = array(
+    '#type'           => 'radios',          
+    '#title'          => t('Show Countdown'),
+    '#description'    => t('Show or hide countdown when date/time is in the past'),
+    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
+    '#default_value'  => $settings['past']['time_out_show_countdown'],
+  );
+
+  $form['past']['time_out_show_date'] = array(
+    '#type'           => 'radios',
+    '#title'          => t('Show Date/Time'),
+    '#description'    => t('Show formatted date/time when value is in the past'),
+    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
+    '#default_value'  => $settings['past']['time_out_show_date'],
+  );
+
+  $form['past']['time_out_show_message'] = array(
+    '#type'           => 'radios',          
+    '#title'          => t('Show message'),
+    '#description'    => t('Show a message when the date/time is in the past'),
+    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
+    '#default_value'  => $settings['past']['time_out_show_message'],
+  );
+  $form['past']['time_out_message'] = array(
+    '#type'           => 'textfield',
+    '#title'          => t('Time out message'),
+    '#description'    => t('Message to display when the date/time is in the past'),
+    '#default_value'  => $settings['past']['time_out_message'],
+  );
+
+
+
+  return $form;
 }
 
 /**
@@ -202,19 +282,19 @@ function date_field_countdown_field_formatter_settings_summary($field, $instance
   $summary = '';
 
   $summary .= t('<b>Time out message</b>: "@message"', array(
-    '@message'  => isset($settings['time_out_message']) ? $settings['time_out_message'] : ''
+    '@message'  => isset($settings['past']['time_out_message']) ? $settings['past']['time_out_message'] : ''
     ));
 
   $summary .= '<br>';
 
   $summary .= t('<b>Time left message</b>: "@message"', array(
-    '@message'  => isset($settings['time_left_message']) ? $settings['time_left_message'] : ''
+    '@message'  => isset($settings['future']['time_left_message']) ? $settings['future']['time_left_message'] : ''
     ));
 
   $summary .= '<br>';
 
   $summary .= t('<b>Date Type </b>: "@message"', array(
-    '@message'  => isset($settings['date_type']) ? $settings['date_type'] : ''
+    '@message'  => isset($settings['common']['date_type']) ? $settings['common']['date_type'] : ''
     ));
   return $summary;
 }
