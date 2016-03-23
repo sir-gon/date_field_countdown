@@ -40,6 +40,7 @@ function date_field_countdown_theme() {
       'template' => 'date_field_cowntdown',
       'variables' => array(
         'timestamp' => NULL,
+        'formatted_date' => NULL,
         'time_out_message' => NULL,
         'time_left_message' => NULL,
         'time_out_hide_timer' => NULL,
@@ -77,20 +78,18 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
 
   $settings = $display['settings'];
   $element = array();
+          
   
+
   switch ($display['type']) {
     case 'countdown':
 
       foreach ($items as $delta => $item) {
 
-        dsm($item);
-
-        if(!isset($item['date_type']))
-          $item['date_type'] = 'none';
-
         $element[$delta] = array(
           '#theme' => 'date_field_cowntdown', 
           '#timestamp' => $item['value']* 1000,
+          '#formatted_date' => format_date((int) $item['value'], $settings['date_type'], '', $item['timezone']),
           '#time_out_message' => $settings['time_out_message'],
           '#time_left_message' => $settings['time_left_message'],
           '#time_out_hide_timer' => $settings['time_out_hide_timer'],
@@ -146,45 +145,41 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
  * Implements hook_field_formatter_settings_form().
  */
 function date_field_countdown_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
-  //This gets the view_mode where our settings are stored
+
   $display = $instance['display'][$view_mode];
-  //This gets the actual settings
-
-
   $settings = $display['settings'];
 
   dsm($settings);
 
-  //Initialize the element variable
   $element = array();
-  //Add your select box
+
   $element['time_out_message'] = array(
     '#type'           => 'textfield',
-    '#title'          => t('Time out message'), // Widget label
-    '#description'    => t(''), // Helper text
+    '#title'          => t('Time out message'),
+    '#description'    => t('Message to display when the date is in the past'),
     '#default_value'  => $settings['time_out_message'],
   );
   $element['time_left_message'] = array(
-    '#type'           => 'textfield',                        // Use a textbox
-    '#title'          => t('Time left message'),                      // Widget label
-    '#description'    => t(''),  // helper text
-    '#default_value'  => $settings['time_left_message'],               // Get the value if it's already been set
+    '#type'           => 'textfield',
+    '#title'          => t('Time left message'),
+    '#description'    => t('Message to display when the date is in the future'),
+    '#default_value'  => $settings['time_left_message'],
   );
   $element['time_out_hide_timer'] = array(
-    '#type'           => 'radios',                        
-    '#title'          => t('Time left message'),                      // Widget label
-    '#description'    => t(''),  // helper text
+    '#type'           => 'radios',          
+    '#title'          => t('Time left message'),
+    '#description'    => t(''),
     '#options' => array( 0 => t('No'), 1 => t('Yes') ),
-    '#default_value'  => $settings['time_out_hide_timer'],               // Get the value if it's already been set
+    '#default_value'  => $settings['time_out_hide_timer'],
   );
-
   $element['date_type'] = array(
     '#type'           => 'select',                        
-    '#title'          => t('Date Type'),                      // Widget label
-    '#description'    => t(''),  // helper text
+    '#title'          => t('Date Type'),
+    '#description'    => t('You can configure date types <a href="@url">here</a>', array('@url' => 'admin/config/regional/date-time')),
     '#options' => array( ),
-    '#default_value'  => $settings['time_out_hide_timer'],               // Get the value if it's already been set
+    '#default_value'  => $settings['time_out_hide_timer'],
   );
+
 
   // Get list of date format types.
   $types = system_get_date_types();
