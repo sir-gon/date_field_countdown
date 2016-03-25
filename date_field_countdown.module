@@ -1,4 +1,13 @@
 <?php
+
+/**
+ * Define visibility constants
+ */
+define ('FIELD_COUNTDOWN_SHOW_NEVER', 0);
+define ('FIELD_COUNTDOWN_SHOW_ALWAYS', 1);
+define ('FIELD_COUNTDOWN_SHOW_IF_IN_THE_FUTURE', 2);
+define ('FIELD_COUNTDOWN_SHOW_IF_IN_THE_PAST', 3);
+
 /**
  * Implements hook_libraries_info().
  */
@@ -43,15 +52,9 @@ function date_field_countdown_theme() {
         'timestamp' => NULL,
         'formatted_date' => NULL,
         // settings
-        'date_type' => NULL,
-        'time_left_show_countdown' => NULL,
-        'time_left_show_date' => NULL,
-        'time_left_show_message' => NULL,
-        'time_left_message' => NULL,
-        'time_out_show_date' => NULL,
-        'time_out_show_countdown' => NULL,
-        'time_out_show_message' => NULL,
-        'time_out_message' => NULL
+        'show_countdown' => NULL,
+        'show_date' => NULL,
+        'note' => NULL
       ),
     ),
   );
@@ -66,21 +69,20 @@ function date_field_countdown_field_formatter_info() {
       'label' => t('Countdown'), 
       'field types' => array('date', 'datestamp', 'datetime'),
       'description' => t(''),
+      // Default settings
       'settings'  => array(
         // Common
-        'common' => array('date_type' => 'long'),
+        'common' => array(
+          'date_type' => 'long',
+          'show_countdown' => FIELD_COUNTDOWN_SHOW_IF_IN_THE_FUTURE,
+          'show_date' => FIELD_COUNTDOWN_SHOW_IF_IN_THE_PAST
+        ),
         // Future
         'future' => array(
-          'time_left_show_countdown' => 1,
-          'time_left_show_date' => 0,
-          'time_left_show_message' =>  1,
           'time_left_message' => t('@days days, @hours hours, @minutes minutes, @seconds seconds left!')
         ),
         // Past
         'past' => array(
-          'time_out_show_countdown' => 0,
-          'time_out_show_date' => 1,
-          'time_out_show_message' => 0,
           'time_out_message' => t('it\'s time!')
         )
       ),
@@ -95,6 +97,7 @@ function date_field_countdown_field_formatter_info() {
 function date_field_countdown_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
 
   $settings = $display['settings'];
+  $now = time();
   $element = array();
   
   switch ($display['type']) {
@@ -104,53 +107,96 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
 
         $element[$delta] = array(
           '#theme' => 'date_field_cowntdown', 
-          '#timestamp' => $item['value']* 1000,
-          '#formatted_date' => format_date((int) $item['value'], $settings['date_type'], '', $item['timezone']),
-          '#time_out_message' => $settings['time_out_message'],
-          '#time_left_message' => $settings['time_left_message'],
-          '#time_out_hide_timer' => $settings['time_out_hide_timer'],
+          '#timestamp' => $item['value'] * 1000,
+          '#note' => $settings['past']['time_out_message'],
+          
         );
 
+        if($settings['common']['show_countdown'] == FIELD_COUNTDOWN_SHOW_NEVER)
+        {
+          $element[$delta]['#show_countdown'] = FIELD_COUNTDOWN_SHOW_NEVER;
+        }
+        else
+        if($settings['common']['show_countdown'] == FIELD_COUNTDOWN_SHOW_ALWAYS)
+        {
+          $element[$delta]['#show_countdown'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
+        }
+        else
+        if($settings['common']['show_countdown'] == FIELD_COUNTDOWN_SHOW_IF_IN_THE_PAST && ($now > $item['value']))
+        {
+          $element[$delta]['#show_countdown'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
+        }
+        else
+        if($settings['common']['show_countdown'] == FIELD_COUNTDOWN_SHOW_IF_IN_THE_FUTURE && ($now < $item['value']))
+        {
+          $element[$delta]['#show_countdown'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
+        } else {
+          $element[$delta]['#show_countdown'] = FIELD_COUNTDOWN_SHOW_NEVER;
+        }
+
+
+        if($settings['common']['show_date'] == FIELD_COUNTDOWN_SHOW_NEVER)
+        {
+          $element[$delta]['#show_date'] = FIELD_COUNTDOWN_SHOW_NEVER;
+        }
+        else
+        if($settings['common']['show_date'] == FIELD_COUNTDOWN_SHOW_ALWAYS)
+        {
+          $element[$delta]['#show_date'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
+        }
+        else
+        if($settings['common']['show_date'] == FIELD_COUNTDOWN_SHOW_IF_IN_THE_PAST && ($now > $item['value']))
+        {
+          $element[$delta]['#show_date'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
+        }
+        else
+        if($settings['common']['show_date'] == FIELD_COUNTDOWN_SHOW_IF_IN_THE_FUTURE && ($now < $item['value']))
+        {
+          $element[$delta]['#show_date'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
+        }
+
+        if(($now < $item['value']))
+        {
+          $element[$delta]['#note'] = $settings['future']['time_left_message'];
+        }
+        else
+        if(($now > $item['value'])){
+          $element[$delta]['#note'] = $settings['past']['time_out_message'];
+        }
 
         switch($item['date_type']) {
 
           case 'datestamp':
 
             $element[$delta]['#timestamp'] = $item['value'] * 1000;
-            if(isset($item['offset']))
-            {
-              $element[$delta]['#timestamp'] = $element[$delta]['#timestamp'] + ($item['offset'] * 1000);
-            }
-
+            $element[$delta]['#formatted_date'] = format_date((int) $item['value'], $settings['common']['date_type'], '', $item['timezone']);
 
           break;
           case 'date': // ISO DATE
 
             $d1=new DateTime($item['value']);
             
-            $element[$delta]['#timestamp'] = (int) $d1->getTimestamp() * 1000;
-            if(isset($item['offset']))
-            {
-              $element[$delta]['#timestamp'] = $element[$delta]['#timestamp'] + ($item['offset'] * 1000);
-            }
+            $element[$delta]['#timestamp'] = (int) $d1->getTimestamp();
+            $element[$delta]['#formatted_date'] = format_date($element[$delta]['#timestamp'], $settings['common']['date_type'], '', $item['timezone']);
+
+            $element[$delta]['#timestamp'] *= 1000;
+
 
           break;
           case 'datetime': // Reverse date time
 
             $d1=new DateTime($item['value']);
 
-            $element[$delta]['#timestamp'] = (int) $d1->getTimestamp() * 1000;
-            /*
-            if(isset($item['offset']))
-            {
-              $element[$delta]['#value'] = $element[$delta]['#value'] + ($item['offset'] * 1000);
-            }
-            */
+            $element[$delta]['#timestamp'] = (int) $d1->getTimestamp();
+
+            $element[$delta]['#formatted_date'] = format_date($element[$delta]['#timestamp'], $settings['common']['date_type'], '', $item['timezone']);
+
+            $element[$delta]['#timestamp'] *= 1000;
 
           break;
         }
 
-    }
+      }
     break;
   }
   return $element;
@@ -170,8 +216,6 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
   // Get list of date format types.
   $types = system_get_date_types();
 
-  dsm($settings);
-
   // Build form
   $form = array();
 
@@ -181,10 +225,38 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
     '#title' => t('Common'),
   );
 
+  $form['common']['show_countdown'] = array(
+    '#type'           => 'select',          
+    '#title'          => t('Show Countdown'),
+    '#description'    => t('Show or hide countdown when date/time is in the past'),
+    '#options' =>
+      array( 
+        FIELD_COUNTDOWN_SHOW_NEVER => t('Never'),
+        FIELD_COUNTDOWN_SHOW_ALWAYS => t('Always'),
+        FIELD_COUNTDOWN_SHOW_IF_IN_THE_FUTURE => t('Show only if value is in the future'),
+        FIELD_COUNTDOWN_SHOW_IF_IN_THE_PAST => t('Show only if value is in the past')
+      ),
+    '#default_value'  => $settings['common']['show_countdown'],
+  );
+
+  $form['common']['show_date'] = array(
+    '#type'           => 'select',
+    '#title'          => t('Show Date/Time'),
+    '#description'    => t('Show formatted date/time when value is in the future'),
+    '#options' =>
+      array( 
+        FIELD_COUNTDOWN_SHOW_NEVER => t('Never'),
+        FIELD_COUNTDOWN_SHOW_ALWAYS => t('Always'),
+        FIELD_COUNTDOWN_SHOW_IF_IN_THE_FUTURE => t('Show only if value is in the future'),
+        FIELD_COUNTDOWN_SHOW_IF_IN_THE_PAST => t('Show only if value is in the past')
+      ),
+    '#default_value'  => $settings['common']['show_date'],
+  );
+
   $form['common']['date_type'] = array(
     '#type'           => 'select',                        
     '#title'          => t('Date Type'),
-    '#description'    => t('Select date type to show, if you want to show the date. You can configure date types <a href="@url">here</a>', array('@url' => 'admin/config/regional/date-time')),
+    '#description'    => t('Select date type to show, if you want to show the date. You can configure date types <a href="@url">here</a>', array('@url' => url('admin/config/regional/date-time'))),
     '#options' => array( ),
     '#default_value'  => $settings['common']['date_type'],
   );
@@ -199,34 +271,10 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
     '#title' => t('Future'),
   );
 
-  $form['future']['time_left_show_countdown'] = array(
-    '#type'           => 'radios',          
-    '#title'          => t('Show Countdown'),
-    '#description'    => t('Show or hide countdown when date/time is in the past'),
-    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
-    '#default_value'  => $settings['future']['time_left_show_countdown'],
-  );
-
-  $form['future']['time_left_show_date'] = array(
-    '#type'           => 'radios',
-    '#title'          => t('Show Date/Time'),
-    '#description'    => t('Show formatted date/time when value is in the future'),
-    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
-    '#default_value'  => $settings['future']['time_left_show_date'],
-  );
-
-  $form['future']['time_left_show_message'] = array(
-    '#type'           => 'radios',
-    '#title'          => t('Show message'),
-    '#description'    => t('Show a message when value is in the future' ),
-    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
-    '#default_value'  => $settings['future']['time_left_show_message'],
-  );
-
   $form['future']['time_left_message'] = array(
     '#type'           => 'textfield',
     '#title'          => t('Time left message'),
-    '#description'    => t('Message to display when the date is in the futur. You can use tokens like: @days, @hours, @minutes, @seconds'),
+    '#description'    => t('Message to display when the date is in the future. You can use tokens like: @days, @hours, @minutes, @seconds'),
     '#default_value'  => $settings['future']['time_left_message'],
   );
 
@@ -236,29 +284,6 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
     '#title' => t('Past'),
   );
 
-  $form['past']['time_out_show_countdown'] = array(
-    '#type'           => 'radios',          
-    '#title'          => t('Show Countdown'),
-    '#description'    => t('Show or hide countdown when date/time is in the past'),
-    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
-    '#default_value'  => $settings['past']['time_out_show_countdown'],
-  );
-
-  $form['past']['time_out_show_date'] = array(
-    '#type'           => 'radios',
-    '#title'          => t('Show Date/Time'),
-    '#description'    => t('Show formatted date/time when value is in the past'),
-    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
-    '#default_value'  => $settings['past']['time_out_show_date'],
-  );
-
-  $form['past']['time_out_show_message'] = array(
-    '#type'           => 'radios',          
-    '#title'          => t('Show message'),
-    '#description'    => t('Show a message when the date/time is in the past'),
-    '#options' => array( 0 => t('No'), 1 => t('Yes') ),
-    '#default_value'  => $settings['past']['time_out_show_message'],
-  );
   $form['past']['time_out_message'] = array(
     '#type'           => 'textfield',
     '#title'          => t('Time out message'),
