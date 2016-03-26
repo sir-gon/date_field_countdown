@@ -1,9 +1,3 @@
-Warning
-=======
-
-Basic support for [date](https://www.drupal.org/project/date) fields with timestamp value
-
-
 About
 =====
 
