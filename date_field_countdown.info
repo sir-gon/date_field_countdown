@@ -5,5 +5,5 @@ dependencies[] = date_api
 package = Date/Time
 core = 7.x
 
-version = 7.x-0.1
+version = 7.x-1.0
 project = date_field_countdown
