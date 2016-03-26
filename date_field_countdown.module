@@ -101,6 +101,7 @@ function date_field_countdown_field_formatter_info() {
       ),
     ), 
   );
+
   return $info;
  }
 
@@ -275,10 +276,10 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
     '#title' => t('Show during...'),
     '#states' => array(
       'visible' => array(
-        '#edit-fields-field-fecha-timestamp-settings-edit-form-settings-common-show-countdown' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
+        ':input[name="fields['.$instance['field_name'].'][settings_edit_form][settings][common][show_countdown]"]' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
       ),
       'required' => array(
-        '#edit-fields-field-fecha-timestamp-settings-edit-form-settings-common-show-countdown' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
+        ':input[name="fields['.$instance['field_name'].'][settings_edit_form][settings][common][show_countdown]"]' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
       ),
     ),
   );
@@ -288,13 +289,13 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
       '#title'          => t('Show during'),
       '#description'    => t('Amount of time before the time value'),
       '#size'           => 2,
-      '#default_value'  => $settings['common']['show_countdown_range']['show_countdown_range_amount'],
+      '#default_value'  => $settings['common']['show_countdown_range_amount'],
       '#states' => array(
         'visible' => array(
-          '#edit-fields-field-fecha-timestamp-settings-edit-form-settings-common-show-countdown' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
+          ':input[name="fields['.$instance['field_name'].'][settings_edit_form][settings][common][show_countdown]"]' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
         ),
         'required' => array(
-          '#edit-fields-field-fecha-timestamp-settings-edit-form-settings-common-show-countdown' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
+          ':input[name="fields['.$instance['field_name'].'][settings_edit_form][settings][common][show_countdown]"]' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
         ),
       ),
     );
@@ -303,18 +304,18 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
       '#type'           => 'select',          
       '#title'          => t('Time unit'),
       '#description'    => t('Time unit of range before the time value'),
-      '#default_value'  => $settings['common']['show_countdown_range']['show_countdown_range_unit'],
       '#options' => array(
           TIME_UNIT_DAYS => t('days'),
           TIME_UNIT_HOURS => t('hours'),
           TIME_UNIT_MINUTES => t('minutes'),
         ),
+      '#default_value'  => $settings['common']['show_countdown_range_unit'],
       '#states' => array(
         'visible' => array(
-          '#edit-fields-field-fecha-timestamp-settings-edit-form-settings-common-show-countdown' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
+          ':input[name="fields['.$instance['field_name'].'][settings_edit_form][settings][common][show_countdown]"]' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
         ),
         'required' => array(
-          '#edit-fields-field-fecha-timestamp-settings-edit-form-settings-common-show-countdown' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
+          ':input[name="fields['.$instance['field_name'].'][settings_edit_form][settings][common][show_countdown]"]' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
         ),
       ),
     );
