@@ -84,11 +84,15 @@ function date_field_countdown_field_formatter_info() {
         'common' => array(
           'date_type' => 'long',
           'show_countdown' => FIELD_COUNTDOWN_SHOW_BEFORE_TIME,
-          'show_countdown_range_amount' => TIME_UNIT_DEFAULT_AMOUNT,
-          'show_countdown_range_unit' => TIME_UNIT_DAYS,
+          'show_countdown_range' => array(
+            'show_countdown_range_amount' => TIME_UNIT_DEFAULT_AMOUNT,
+            'show_countdown_range_unit' => TIME_UNIT_DAYS,
+          ),
           'show_date' => FIELD_COUNTDOWN_SHOW_AFTER_TIME,
-          'show_date_range_amount' => TIME_UNIT_DEFAULT_AMOUNT,
-          'show_date_range_unit' => TIME_UNIT_DAYS
+          'show_date_range' => array(
+            'show_date_range_amount' => TIME_UNIT_DEFAULT_AMOUNT,
+            'show_date_range_unit' => TIME_UNIT_DAYS
+          ),
         ),
         // Future
         'future' => array(
@@ -121,11 +125,39 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
 
         $element[$delta] = array(
           '#theme' => 'date_field_cowntdown', 
-          '#timestamp' => $item['value'] * 1000,
+          '#timestamp' => $item['value'],
           '#note' => $settings['past']['time_out_message'],
           '#show_countdown' => FIELD_COUNTDOWN_SHOW_NEVER,
           '#show_date' => FIELD_COUNTDOWN_SHOW_NEVER
         );
+
+        // Timestamp and Formmated date
+        switch($item['date_type']) {
+
+          case 'datestamp':
+
+            $element[$delta]['#timestamp'] = $item['value'];
+            $element[$delta]['#formatted_date'] = format_date((int) $item['value'], $settings['common']['date_type'], '', $item['timezone']);
+
+          break;
+          case 'date': // ISO DATE
+
+            $d1=new DateTime($item['value']);
+            
+            $element[$delta]['#timestamp'] = (int) $d1->getTimestamp();
+            $element[$delta]['#formatted_date'] = format_date($element[$delta]['#timestamp'], $settings['common']['date_type'], '', $item['timezone']);
+
+          break;
+          case 'datetime': // Reverse date time
+
+            $d1=new DateTime($item['value']);
+
+            $element[$delta]['#timestamp'] = (int) $d1->getTimestamp();
+
+            $element[$delta]['#formatted_date'] = format_date($element[$delta]['#timestamp'], $settings['common']['date_type'], '', $item['timezone']);
+
+          break;
+        }
 
         // Countdown visibility
         switch($settings['common']['show_countdown'])
@@ -139,7 +171,8 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
           break;
 
           case FIELD_COUNTDOWN_SHOW_BEFORE_TIME:
-            if($now < $item['value'])
+
+            if($now < $element[$delta]['#timestamp'])
             {
               $element[$delta]['#show_countdown'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
             }
@@ -148,7 +181,7 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
             // time range in seconds
             $range = ($settings['common']['show_countdown_range']['show_countdown_range_amount'] * $settings['common']['show_countdown_range']['show_countdown_range_unit']);
 
-            if( ($item['value'] - $range) < $now && $now < $item['value'])
+            if( ($element[$delta]['#timestamp'] - $range) < $now && $now < $element[$delta]['#timestamp'])
             {
               $element[$delta]['#show_countdown'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
             }
@@ -194,38 +227,7 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
           $element[$delta]['#note'] = $settings['past']['time_out_message'];
         }
 
-        // Timestamp and Formmated date
-        switch($item['date_type']) {
-
-          case 'datestamp':
-
-            $element[$delta]['#timestamp'] = $item['value'] * 1000;
-            $element[$delta]['#formatted_date'] = format_date((int) $item['value'], $settings['common']['date_type'], '', $item['timezone']);
-
-          break;
-          case 'date': // ISO DATE
-
-            $d1=new DateTime($item['value']);
-            
-            $element[$delta]['#timestamp'] = (int) $d1->getTimestamp();
-            $element[$delta]['#formatted_date'] = format_date($element[$delta]['#timestamp'], $settings['common']['date_type'], '', $item['timezone']);
-
-            $element[$delta]['#timestamp'] *= 1000;
-
-
-          break;
-          case 'datetime': // Reverse date time
-
-            $d1=new DateTime($item['value']);
-
-            $element[$delta]['#timestamp'] = (int) $d1->getTimestamp();
-
-            $element[$delta]['#formatted_date'] = format_date($element[$delta]['#timestamp'], $settings['common']['date_type'], '', $item['timezone']);
-
-            $element[$delta]['#timestamp'] *= 1000;
-
-          break;
-        }
+        
 
       }
     break;
@@ -289,7 +291,7 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
       '#title'          => t('Show during'),
       '#description'    => t('Amount of time before the time value'),
       '#size'           => 2,
-      '#default_value'  => $settings['common']['show_countdown_range_amount'],
+      '#default_value'  => $settings['common']['show_countdown_range']['show_countdown_range_amount'],
       '#states' => array(
         'visible' => array(
           ':input[name="fields['.$instance['field_name'].'][settings_edit_form][settings][common][show_countdown]"]' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),
@@ -309,7 +311,7 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
           TIME_UNIT_HOURS => t('hours'),
           TIME_UNIT_MINUTES => t('minutes'),
         ),
-      '#default_value'  => $settings['common']['show_countdown_range_unit'],
+      '#default_value'  => $settings['common']['show_countdown_range']['show_countdown_range_unit'],
       '#states' => array(
         'visible' => array(
           ':input[name="fields['.$instance['field_name'].'][settings_edit_form][settings][common][show_countdown]"]' => array('value' => FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME ),

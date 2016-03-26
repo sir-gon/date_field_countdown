@@ -17,6 +17,8 @@ $field_id = 'date-field-countdown-'.$key;
 $field_id_note = $field_id.'-note';
 $field_id_date = $field_id.'-countdown';
 $field_id_countdown = $field_id.'-countdown';
+
+$timestamp *= 1000;
 ?>
 
 <div class="date-field-countdown">
