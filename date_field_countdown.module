@@ -51,8 +51,6 @@ function date_field_countdown_libraries_info() {
 */
 function date_field_countdown_theme() {
   
-  $library = libraries_load('countdown');
-
   return array(
     'date_field_cowntdown' => array(
       'template' => 'date_field_cowntdown',
@@ -113,6 +111,8 @@ function date_field_countdown_field_formatter_info() {
 * Implements hook_field_formatter_view().
 */
 function date_field_countdown_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+
+  $library = libraries_load('countdown');
 
   $settings = $display['settings'];
   $now = time();
