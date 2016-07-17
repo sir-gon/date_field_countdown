@@ -11,6 +11,10 @@ define ('FIELD_COUNTDOWN_SHOW_AFTER_TIME', 3);
 define ('FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME', 4);
 define ('FIELD_COUNTDOWN_SHOW_PERIOD_AFTER_TIME', 5);
 
+define ('FIELD_COUNTDOWN_LIB_NONE', 0);
+define ('FIELD_COUNTDOWN_LIB_COUNTDOWN', 1);
+define ('FIELD_COUNTDOWN_LIB_TIMECIRCLES', 2);
+
 define ('TIME_UNIT_DAYS', 86400);
 define ('TIME_UNIT_HOURS', 3600);
 define ('TIME_UNIT_MINUTES', 60);
@@ -29,7 +33,7 @@ function date_field_countdown_libraries_info() {
     'download url' => 'http://tutorialzine.com/2011/12/countdown-jquery/',
       'version arguments' => array(
       'file' => 'jquery.countdown.js',
-      'pattern' => '@version\s+([0-9a-zA-Z\.-]+)@', 
+      'pattern' => '@version\s+([0-9a-zA-Z\.-]+)@',
       'lines' => 7,
       'cols' => 30,
     ),
@@ -43,6 +47,28 @@ function date_field_countdown_libraries_info() {
     ),
   );
 
+  $libraries['TimeCircles'] = array(
+    'name' => 'TimeCircles',
+    'vendor url' => 'https://github.com/wimbarelds/TimeCircles',
+    'download url' => 'https://github.com/wimbarelds/TimeCircles',
+    'path' => 'inc',
+    'version arguments' => array(
+      'file' => 'package.json',
+      // Best practice: Document the actual version strings for later reference.
+      // 1.x: Version 1.0
+      'pattern' => '/"version": "([0-9a-zA-Z.-]+)"/',
+      'lines' => 5,
+    ),
+    'files' => array(
+      'js' => array(
+        'TimeCircles.js'
+      ),
+      'css' => array(
+        'TimeCircles.css'
+      )
+    ),
+  );
+
   return $libraries;
 }
 
@@ -50,10 +76,34 @@ function date_field_countdown_libraries_info() {
 * Implements hook_theme().
 */
 function date_field_countdown_theme() {
-  
+
   return array(
-    'date_field_cowntdown' => array(
-      'template' => 'date_field_cowntdown',
+    'date_field_countdown' => array(
+      'template' => 'date_field_countdown',
+      'variables' => array(
+        // values
+        'timestamp' => NULL,
+        'formatted_date' => NULL,
+        // settings
+        'show_countdown' => NULL,
+        'show_date' => NULL,
+        'note' => NULL
+      ),
+    ),
+    'date_field_countdown_countdown' => array(
+      'template' => 'date_field_countdown_countdown',
+      'variables' => array(
+        // values
+        'timestamp' => NULL,
+        'formatted_date' => NULL,
+        // settings
+        'show_countdown' => NULL,
+        'show_date' => NULL,
+        'note' => NULL
+      ),
+    ),
+    'date_field_countdown_timecircles' => array(
+      'template' => 'date_field_countdown_timecircles',
       'variables' => array(
         // values
         'timestamp' => NULL,
@@ -73,7 +123,7 @@ function date_field_countdown_theme() {
 function date_field_countdown_field_formatter_info() {
   $info = array(
     'countdown' => array(
-      'label' => t('Countdown'), 
+      'label' => t('Countdown'),
       'field types' => array('date', 'datestamp', 'datetime'),
       'description' => t(''),
       // Default settings
@@ -82,6 +132,7 @@ function date_field_countdown_field_formatter_info() {
         'common' => array(
           'date_type' => 'long',
           'show_countdown' => FIELD_COUNTDOWN_SHOW_BEFORE_TIME,
+          'show_countdown_library' => FIELD_COUNTDOWN_LIB_COUNTDOWN,
           'show_countdown_range' => array(
             'show_countdown_range_amount' => TIME_UNIT_DEFAULT_AMOUNT,
             'show_countdown_range_unit' => TIME_UNIT_DAYS,
@@ -101,7 +152,7 @@ function date_field_countdown_field_formatter_info() {
           'time_out_message' => t('it\'s time!')
         )
       ),
-    ), 
+    ),
   );
 
   return $info;
@@ -112,24 +163,38 @@ function date_field_countdown_field_formatter_info() {
 */
 function date_field_countdown_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
 
-  $library = libraries_load('countdown');
-
   $settings = $display['settings'];
   $now = time();
   $element = array();
-  
+
   switch ($display['type']) {
     case 'countdown':
 
       foreach ($items as $delta => $item) {
 
         $element[$delta] = array(
-          '#theme' => 'date_field_cowntdown', 
+          '#theme' => 'date_field_countdown_timecircles',
           '#timestamp' => $item['value'],
           '#note' => $settings['past']['time_out_message'],
           '#show_countdown' => FIELD_COUNTDOWN_SHOW_NEVER,
           '#show_date' => FIELD_COUNTDOWN_SHOW_NEVER
         );
+
+        switch($settings['common']['show_countdown_library']) {
+          case FIELD_COUNTDOWN_LIB_COUNTDOWN:
+            $library = libraries_load('countdown');
+            $element[$delta]['#theme'] = 'date_field_countdown_countdown';
+            break;
+
+          case FIELD_COUNTDOWN_LIB_TIMECIRCLES:
+            $library = libraries_load('TimeCircles');
+            $element[$delta]['#theme'] = 'date_field_countdown_timecircles';
+            break;
+          case FIELD_COUNTDOWN_LIB_NONE:
+          default:
+
+          break;
+        }
 
         // Timestamp and Formmated date
         switch($item['date_type']) {
@@ -143,7 +208,7 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
           case 'date': // ISO DATE
 
             $d1=new DateTime($item['value']);
-            
+
             $element[$delta]['#timestamp'] = (int) $d1->getTimestamp();
             $element[$delta]['#formatted_date'] = format_date($element[$delta]['#timestamp'], $settings['common']['date_type'], '', $item['timezone']);
 
@@ -176,7 +241,7 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
             {
               $element[$delta]['#show_countdown'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
             }
-          break; 
+          break;
           case FIELD_COUNTDOWN_SHOW_PERIOD_BEFORE_TIME:
             // time range in seconds
             $range = ($settings['common']['show_countdown_range']['show_countdown_range_amount'] * $settings['common']['show_countdown_range']['show_countdown_range_unit']);
@@ -203,7 +268,7 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
             {
               $element[$delta]['#show_date'] = FIELD_COUNTDOWN_SHOW_ALWAYS;
             }
-          break; 
+          break;
           case FIELD_COUNTDOWN_SHOW_AFTER_TIME:
             // time range in seconds
             if($now > $item['value'])
@@ -227,7 +292,7 @@ function date_field_countdown_field_formatter_view($entity_type, $entity, $field
           $element[$delta]['#note'] = $settings['past']['time_out_message'];
         }
 
-        
+
 
       }
     break;
@@ -249,6 +314,10 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
   // Get list of date format types.
   $types = system_get_date_types();
 
+  //
+  $libCountdown = libraries_detect('countdown');
+  $libTimeCircles = libraries_detect('TimeCircles');
+
   // Build form
   $form = array();
 
@@ -259,11 +328,11 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
   );
 
   $form['common']['show_countdown'] = array(
-    '#type'           => 'select',          
+    '#type'           => 'select',
     '#title'          => t('Show Countdown'),
     '#description'    => t('Show or hide countdown when date/time is in the past'),
     '#options' =>
-      array( 
+      array(
         FIELD_COUNTDOWN_SHOW_NEVER => t('Never'),
         FIELD_COUNTDOWN_SHOW_ALWAYS => t('Always'),
         FIELD_COUNTDOWN_SHOW_BEFORE_TIME => t('Show only if time value is in the future'),
@@ -271,6 +340,24 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
       ),
     '#default_value'  => $settings['common']['show_countdown'],
   );
+
+  $form['common']['show_countdown_library'] = array(
+    '#type'           => 'select',
+    '#title'          => t('Javascript Library'),
+    '#description'    => t('Select library to render. No libraries? See <a href="@url">report page</a>.', array('@url' => url('admin/report/status'))),
+    '#options' =>
+      array(
+        FIELD_COUNTDOWN_LIB_NONE => t('None'),
+      ),
+    '#default_value'  => $settings['common']['show_countdown_library'],
+  );
+
+  if ($libCountdown && !empty($libCountdown['installed'])) {
+    $form['common']['show_countdown_library']['#options'][FIELD_COUNTDOWN_LIB_COUNTDOWN] = 'Countdown';
+  }
+  if ($libTimeCircles && !empty($libTimeCircles['installed'])) {
+    $form['common']['show_countdown_library']['#options'][FIELD_COUNTDOWN_LIB_TIMECIRCLES] = 'TimeCircles';
+  }
 
   // Common -> countdown display range
   $form['common']['show_countdown_range'] = array(
@@ -287,7 +374,7 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
   );
 
     $form['common']['show_countdown_range']['show_countdown_range_amount'] = array(
-      '#type'           => 'textfield',          
+      '#type'           => 'textfield',
       '#title'          => t('Show during'),
       '#description'    => t('Amount of time before the time value'),
       '#size'           => 2,
@@ -303,7 +390,7 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
     );
 
     $form['common']['show_countdown_range']['show_countdown_range_unit'] = array(
-      '#type'           => 'select',          
+      '#type'           => 'select',
       '#title'          => t('Time unit'),
       '#description'    => t('Time unit of range before the time value'),
       '#options' => array(
@@ -322,13 +409,13 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
       ),
     );
 
-  
+
   $form['common']['show_date'] = array(
     '#type'           => 'select',
     '#title'          => t('Show Date/Time'),
     '#description'    => t('Show formatted date/time when value is in the future'),
     '#options' =>
-      array( 
+      array(
         FIELD_COUNTDOWN_SHOW_NEVER => t('Never'),
         FIELD_COUNTDOWN_SHOW_ALWAYS => t('Always'),
         FIELD_COUNTDOWN_SHOW_BEFORE_TIME => t('Show only if time value is in the future'),
@@ -340,7 +427,7 @@ function date_field_countdown_field_formatter_settings_form($field, $instance, $
 
 
   $form['common']['date_type'] = array(
-    '#type'           => 'select',                        
+    '#type'           => 'select',
     '#title'          => t('Date Type'),
     '#description'    => t('Select date type to show, if you want to show the date. You can configure date types <a href="@url">here</a>', array('@url' => url('admin/config/regional/date-time'))),
     '#options' => array( ),
@@ -409,4 +496,3 @@ function date_field_countdown_field_formatter_settings_summary($field, $instance
     ));
   return $summary;
 }
-
